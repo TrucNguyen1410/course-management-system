@@ -1,0 +1,54 @@
+@page "/login"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@using KhoaHocOnline.WebAdmin.Layout 
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+
+@layout LoginLayout
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow-lg p-4" style="width: 400px; border-radius: 10px;">
+        <div class="text-center mb-4">
+            <h3 class="text-primary fw-bold">Đăng Nhập Admin</h3>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger text-center">@errorMessage</div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Email</label>
+            <input @bind="loginModel.Email" class="form-control" placeholder="admin@gmail.com" />
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label fw-bold">Mật khẩu</label>
+            <input @bind="loginModel.Password" type="password" class="form-control" placeholder="••••••••" />
+        </div>
+
+        <button class="btn btn-primary w-100 fw-bold py-2" @onclick="HandleLogin">
+            Đăng Nhập
+        </button>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var result = await AuthService.Login(loginModel);
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/", true); // Chuyển về trang chủ và reload để nạp Menu
+        }
+        else
+        {
+            errorMessage = result.ErrorMessage;
+        }
+    }
+}

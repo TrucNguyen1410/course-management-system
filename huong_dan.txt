@@ -1,0 +1,31 @@
+1. API
+cd KhoaHocOnline.API
+dotnet build (Build Succeeded (Build thành công))
+dotnet run
+
+http://localhost:5284/swagger/index.html
+
+2. ADMIN
+cd KhoaHocOnline.WebAdmin
+dotnet run
+
+http://localhost:5222
+
+3. USER
+cd KhoaHocOnline.WebUser
+dotnet run
+
+http://localhost:5224
+
+
+4. INSTRUCTOR
+cd KhoaHocOnline.WebInstructor
+dotnet run
+
+http://localhost:5223
+
+{
+  "email": "admin@gmail.com",
+  "fullName": "Administrator",
+  "password": "Admin@123" 
+}

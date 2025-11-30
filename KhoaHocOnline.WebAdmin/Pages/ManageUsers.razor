@@ -1,0 +1,144 @@
+@page "/manage-users"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject UserService UserService
+@inject IJSRuntime JSRuntime
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary fw-bold">Quản Lý Người Dùng</h3>
+        <button class="btn btn-success" @onclick="OpenCreateMode">
+            <i class="bi bi-person-plus-fill"></i> Thêm User Mới
+        </button>
+    </div>
+
+    <!-- FORM -->
+    @if (isFormVisible)
+    {
+        <div class="card shadow-sm mb-4 bg-light border-primary">
+            <div class="card-header bg-primary text-white fw-bold">
+                @(isEditMode ? "Cập nhật thông tin" : "Thêm người dùng mới")
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Email (Tài khoản)</label>
+                        <input @bind="currentUser.Email" class="form-control" placeholder="email@domain.com" disabled="@isEditMode" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Số điện thoại</label>
+                        <input @bind="currentUser.PhoneNumber" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mật khẩu @(isEditMode ? "(Để trống nếu không đổi)" : "")</label>
+                        <input @bind="currentUser.Password" type="password" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vai trò (Phân quyền)</label>
+                        <select @bind="currentUser.SelectedRole" class="form-select">
+                            <option value="User">Học viên (User)</option>
+                            <option value="Admin">Quản trị viên (Admin)</option>
+                            <!-- ĐÃ THÊM MỤC NÀY -->
+                            <option value="Instructor">Giảng viên (Instructor)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button class="btn btn-secondary me-2" @onclick="CloseForm">Hủy</button>
+                    <button class="btn btn-primary" @onclick="HandleSubmit">
+                        <i class="bi bi-save"></i> Lưu lại
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- TABLE -->
+    <div class="table-responsive shadow-sm bg-white rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Email / Tài khoản</th>
+                    <th>SĐT</th>
+                    <th>Vai trò</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (users == null)
+                {
+                    <tr><td colspan="4" class="text-center py-4">Đang tải...</td></tr>
+                }
+                else
+                {
+                    @foreach (var u in users)
+                    {
+                        <tr>
+                            <td class="fw-semibold text-primary">@u.Email</td>
+                            <td class="text-center">@u.PhoneNumber</td>
+                            <td class="text-center">
+                                @foreach (var role in u.Roles)
+                                {
+                                    <span class="badge @GetRoleBadge(role) me-1">@role</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary mx-1" @onclick="() => OpenEditMode(u)"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-sm btn-outline-danger mx-1" @onclick="() => HandleDelete(u)"><i class="bi bi-trash-fill"></i></button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<UserDto>? users;
+    private UserDto currentUser = new UserDto();
+    private bool isFormVisible = false;
+    private bool isEditMode = false;
+
+    protected override async Task OnInitializedAsync() { await LoadData(); }
+    private async Task LoadData() { users = await UserService.GetUsers(); }
+
+    private void OpenCreateMode() {
+        currentUser = new UserDto { SelectedRole = "User" };
+        isEditMode = false; isFormVisible = true;
+    }
+
+    private void OpenEditMode(UserDto user) {
+        currentUser = new UserDto { 
+            Id = user.Id, Email = user.Email, PhoneNumber = user.PhoneNumber, 
+            SelectedRole = user.Roles.FirstOrDefault() ?? "User" 
+        };
+        isEditMode = true; isFormVisible = true;
+    }
+
+    private void CloseForm() => isFormVisible = false;
+
+    private async Task HandleSubmit() {
+        if (string.IsNullOrEmpty(currentUser.Email)) return;
+        bool success = isEditMode ? await UserService.UpdateUser(currentUser.Id, currentUser) 
+                                  : await UserService.CreateUser(currentUser);
+        
+        if (success) { CloseForm(); await LoadData(); }
+        else { await JSRuntime.InvokeVoidAsync("alert", "Thao tác thất bại."); }
+    }
+
+    private async Task HandleDelete(UserDto user) {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Xóa user {user.Email}?")) {
+            if (await UserService.DeleteUser(user.Id)) await LoadData();
+        }
+    }
+
+    private string GetRoleBadge(string role) {
+        return role switch {
+            "Admin" => "bg-danger",
+            "Instructor" => "bg-warning text-dark",
+            _ => "bg-success"
+        };
+    }
+}

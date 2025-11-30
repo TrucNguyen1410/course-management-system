@@ -1,0 +1,250 @@
+@page "/manage-vouchers"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject VoucherService VoucherService
+@inject IJSRuntime JSRuntime
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary fw-bold">Quản Lý Voucher</h3>
+        <button class="btn btn-success" @onclick="OpenCreateMode">
+            <i class="bi bi-plus-circle"></i> Thêm Mã Mới
+        </button>
+    </div>
+
+    @if (isFormVisible)
+    {
+        <div class="card shadow-sm mb-4 border-warning">
+            <div class="card-header bg-warning text-dark fw-bold">
+                @(isEditMode ? "Cập nhật Voucher" : "Tạo Voucher Mới")
+            </div>
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Mã Code</label>
+                        <input @bind="currentVoucher.Code" class="form-control text-uppercase fw-bold" placeholder="VD: TET2025" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Loại giảm giá</label>
+                        <select class="form-select" value="@currentVoucher.IsPercentage" @onchange="OnTypeChanged">
+                            <option value="true">Giảm theo Phần trăm (%)</option>
+                            <option value="false">Giảm theo Số tiền (VNĐ)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Giá trị giảm</label>
+                        <div class="input-group">
+                            <input @bind="currentVoucher.DiscountValue" type="number" class="form-control fw-bold text-primary" />
+                            <span class="input-group-text fw-bold">
+                                @(currentVoucher.IsPercentage ? "%" : "VNĐ")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hạn sử dụng</label>
+                        <input @bind="currentVoucher.ExpiryDate" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Trạng thái</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" @bind="currentVoucher.IsActive" style="cursor: pointer;">
+                            <label class="form-check-label ms-2">@(currentVoucher.IsActive ? "Đang hoạt động" : "Đã khóa")</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-secondary me-2" @onclick="CloseForm">Hủy bỏ</button>
+                    <button class="btn btn-primary fw-bold px-4" @onclick="HandleSubmit">
+                        <i class="bi bi-save me-2"></i> Lưu Voucher
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="table-responsive shadow-sm bg-white rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Mã Code</th>
+                    <th>Giảm giá</th>
+                    <th>Hạn sử dụng</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (vouchers == null)
+                {
+                    <tr><td colspan="5" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                }
+                else if (vouchers.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có mã giảm giá nào.</td></tr>
+                }
+                else
+                {
+                    @foreach (var v in vouchers)
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-3 py-2 fs-6">@v.Code</span>
+                            </td>
+                            
+                            <td class="text-center fw-bold text-danger fs-5">
+                                @if (v.IsPercentage)
+                                {
+                                    // Nếu là %, bỏ số thập phân .00
+                                    <span>@v.DiscountValue.ToString("0")%</span>
+                                }
+                                else
+                                {
+                                    // Nếu là tiền, format có dấu phẩy
+                                    <span>@v.DiscountValue.ToString("#,##0") đ</span>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                @v.ExpiryDate.ToString("dd/MM/yyyy")
+                                @if (v.ExpiryDate < DateTime.Now)
+                                {
+                                    <span class="badge bg-danger ms-2">Hết hạn</span>
+                                }
+                            </td>
+                            
+                            <td class="text-center">
+                                @if (v.IsActive && v.ExpiryDate >= DateTime.Now)
+                                {
+                                    <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Không khả dụng</span>
+                                }
+                            </td>
+                            
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary mx-1" title="Sửa" @onclick="() => OpenEditMode(v)">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger mx-1" title="Xóa" @onclick="() => HandleDelete(v)">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<VoucherDto>? vouchers;
+    private VoucherDto currentVoucher = new VoucherDto();
+    private bool isFormVisible = false;
+    private bool isEditMode = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        vouchers = await VoucherService.GetVouchers();
+    }
+
+    // Hàm xử lý khi chọn Dropdown loại giảm giá
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        if (bool.TryParse(e.Value?.ToString(), out bool result))
+        {
+            currentVoucher.IsPercentage = result;
+        }
+    }
+
+    private void OpenCreateMode()
+    {
+        currentVoucher = new VoucherDto 
+        { 
+            IsActive = true, 
+            IsPercentage = true, // Mặc định là %
+            DiscountValue = 0,
+            ExpiryDate = DateTime.Now.AddMonths(1) 
+        };
+        isEditMode = false;
+        isFormVisible = true;
+    }
+
+    private void OpenEditMode(VoucherDto voucher)
+    {
+        currentVoucher = new VoucherDto 
+        { 
+            VoucherID = voucher.VoucherID,
+            Code = voucher.Code,
+            DiscountValue = voucher.DiscountValue,
+            IsPercentage = voucher.IsPercentage,
+            ExpiryDate = voucher.ExpiryDate,
+            IsActive = voucher.IsActive
+        };
+        isEditMode = true;
+        isFormVisible = true;
+    }
+
+    private void CloseForm()
+    {
+        isFormVisible = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(currentVoucher.Code)) 
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Vui lòng nhập mã Code!");
+            return;
+        }
+
+        // Logic kiểm tra hợp lệ
+        if (currentVoucher.IsPercentage && currentVoucher.DiscountValue > 100)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Giảm giá theo phần trăm không được quá 100%!");
+            return;
+        }
+
+        bool success;
+        if (isEditMode)
+        {
+            success = await VoucherService.UpdateVoucher(currentVoucher.VoucherID, currentVoucher);
+        }
+        else
+        {
+            success = await VoucherService.CreateVoucher(currentVoucher);
+        }
+
+        if (success)
+        {
+            CloseForm();
+            await LoadData();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi: Mã code có thể đã tồn tại.");
+        }
+    }
+
+    private async Task HandleDelete(VoucherDto voucher)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn chắc chắn muốn xóa voucher '{voucher.Code}'?");
+        if (confirmed)
+        {
+            if (await VoucherService.DeleteVoucher(voucher.VoucherID)) await LoadData();
+        }
+    }
+}

@@ -1,0 +1,92 @@
+@page "/manage-categories"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject CategoryService CategoryService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <h3 class="text-primary fw-bold mb-4">Quản lý Danh Mục</h3>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <input @bind="newCategoryName" class="form-control" placeholder="Nhập tên danh mục mới..." />
+                <button class="btn btn-success" @onclick="HandleAddCategory">Thêm Mới</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Tên Danh Mục</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (categories == null)
+                {
+                    <tr><td colspan="3" class="text-center">Đang tải dữ liệu...</td></tr>
+                }
+                else if (categories.Count == 0)
+                {
+                    <tr><td colspan="3" class="text-center">Chưa có danh mục nào.</td></tr>
+                }
+                else
+                {
+                    @foreach (var cat in categories)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold">@cat.CategoryID</td>
+                            <td class="text-primary">@cat.CategoryName</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-danger">Xóa</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    // Thêm dấu ? để cho phép null lúc đầu
+    private List<CategoryDto>? categories;
+    
+    // Khởi tạo chuỗi rỗng để tránh lỗi null
+    private string newCategoryName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        categories = await CategoryService.GetCategories();
+    }
+
+    private async Task HandleAddCategory()
+    {
+        if (string.IsNullOrWhiteSpace(newCategoryName)) return;
+
+        // Tạo object DTO với đầy đủ dữ liệu mặc định
+        var newCat = new CategoryDto 
+        { 
+            CategoryName = newCategoryName,
+            Description = "", 
+            Courses = new List<CoursesSummaryDto>() 
+        };
+
+        var success = await CategoryService.CreateCategory(newCat);
+
+        if (success)
+        {
+            newCategoryName = string.Empty;
+            await LoadData();
+        }
+    }
+}

@@ -1,0 +1,68 @@
+@page "/course-detail/{id:int}"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject CourseService CourseService
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <button class="btn btn-secondary mb-3" @onclick='() => Navigation.NavigateTo("/")'>
+        <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+    </button>
+
+    @if (course == null)
+    {
+        <p class="text-center">Đang tải thông tin...</p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <img src="@(string.IsNullOrEmpty(course.ThumbnailURL) ? "https://via.placeholder.com/400x250" : course.ThumbnailURL)" class="card-img-top" alt="@course.Title">
+                    <div class="card-body">
+                        <h4 class="text-danger fw-bold text-center">@course.Price.ToString("#,##0") đ</h4>
+                        <hr />
+                        <p><strong>Danh mục:</strong> @(course.Category?.CategoryName ?? "N/A")</p>
+                        <p><strong>Ngày tạo:</strong> @course.CreatedAt.ToString("dd/MM/yyyy")</p>
+                        <button class="btn btn-primary w-100">Chỉnh sửa khóa học</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm p-4">
+                    <h2 class="text-primary fw-bold">@course.Title</h2>
+                    <p class="text-muted">@course.Description</p>
+
+                    <h5 class="mt-4 fw-bold border-bottom pb-2">Danh sách chương học</h5>
+                    @if (course.Chapters == null || course.Chapters.Count == 0)
+                    {
+                        <p class="text-muted fst-italic">Chưa có chương học nào.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var chap in course.Chapters)
+                            {
+                                <li class="list-group-item">
+                                    <i class="bi bi-play-circle me-2"></i> @chap.Title
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private CourseDto? course;
+
+    protected override async Task OnInitializedAsync()
+    {
+        course = await CourseService.GetCourseById(Id);
+    }
+}

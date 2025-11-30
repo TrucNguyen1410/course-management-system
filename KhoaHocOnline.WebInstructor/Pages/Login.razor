@@ -1,0 +1,71 @@
+@page "/login"
+<!-- Lưu ý: Dùng Namespace của WebAdmin vì bạn đã copy thư mục Services/Models sang -->
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+
+<div class="d-flex justify-content-center align-items-center vh-100" style="background-color: #f0fdf4;">
+    <div class="card shadow-lg p-4 border-0" style="width: 400px; border-radius: 15px;">
+        <div class="text-center mb-4">
+            <div class="bg-success text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                <i class="bi bi-person-video3 fs-2"></i>
+            </div>
+            <h3 class="text-success fw-bold">Cổng Giảng Viên</h3>
+            <p class="text-muted small">Đăng nhập để quản lý khóa học của bạn</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger text-center py-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@errorMessage
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label fw-bold text-secondary">Email</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
+                <input @bind="loginModel.Email" class="form-control border-start-0" placeholder="instructor@email.com" />
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label fw-bold text-secondary">Mật khẩu</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-key"></i></span>
+                <input @bind="loginModel.Password" type="password" class="form-control border-start-0" placeholder="••••••••" />
+            </div>
+        </div>
+
+        <button class="btn btn-success w-100 fw-bold py-2 mb-3 shadow-sm" @onclick="HandleLogin">
+            ĐĂNG NHẬP <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+
+        <div class="text-center">
+            <a href="#" class="text-decoration-none text-muted small">Quên mật khẩu?</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        // Gọi Service đăng nhập (Dùng chung logic với Admin/User)
+        var result = await AuthService.Login(loginModel);
+
+        if (result.IsSuccess)
+        {
+            // Đăng nhập thành công -> Vào trang chủ
+            Navigation.NavigateTo("/", true);
+        }
+        else
+        {
+            errorMessage = result.ErrorMessage ?? "Tài khoản hoặc mật khẩu không đúng.";
+        }
+    }
+}

@@ -1,0 +1,85 @@
+is_global = true
+build_property.EnableAotAnalyzer = 
+build_property.EnableSingleFileAnalyzer = 
+build_property.EnableTrimAnalyzer = false
+build_property.IncludeAllContentForSelfExtract = 
+build_property.TargetFramework = net9.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = browser
+build_property.RootNamespace = KhoaHocOnline.WebInstructor
+build_property.RootNamespace = KhoaHocOnline.WebInstructor
+build_property.ProjectDir = D:\quan_li_khoa_hoc_online\KhoaHocOnline.WebInstructor\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = false
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\quan_li_khoa_hoc_online\KhoaHocOnline.WebInstructor
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 9.0
+build_property.EnableCodeStyleSeverity = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/App.razor]
+build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Layout/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XFJlZGlyZWN0VG9Mb2dpbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/AddCourse.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRkQ291cnNlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/Counter.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/CourseDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291cnNlRGV0YWlsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/EditCourse.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRWRpdENvdXJzZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/ManageCurriculum.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWFuYWdlQ3VycmljdWx1bS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/MyStudents.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTXlTdHVkZW50cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/MyTeachingCourses.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTXlUZWFjaGluZ0NvdXJzZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Pages/Weather.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2VhdGhlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-gcb8iwfdaz
+
+[D:/quan_li_khoa_hoc_online/KhoaHocOnline.WebInstructor/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE5hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-ogh9hp0c1e

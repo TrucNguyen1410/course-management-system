@@ -1,0 +1,95 @@
+@page "/edit-course/{id:int}"
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@using KhoaHocOnline.WebAdmin.Services
+@using Blazored.LocalStorage
+@inject CourseService courseService
+@inject CategoryService catService
+@inject NavigationManager nav
+@inject ILocalStorageService localStorage
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Chỉnh Sửa Khóa Học</h5>
+                    <a href="manage-courses" class="btn btn-sm btn-light">Quay lại</a>
+                </div>
+                <div class="card-body">
+                    @if (course == null)
+                    {
+                        <p class="text-center">Đang tải thông tin...</p>
+                    }
+                    else
+                    {
+                        <EditForm Model="@course" OnValidSubmit="HandleUpdate">
+                             <div class="mb-3">
+                                <label class="form-label fw-bold">Danh Mục</label>
+                                <InputSelect class="form-select" @bind-Value="course.CategoryID">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    @if (categories != null)
+                                    {
+                                        foreach (var cat in categories)
+                                        {
+                                            <option value="@cat.CategoryID">@cat.CategoryName</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tên khóa học</label>
+                                <InputText class="form-control" @bind-Value="course.Title" />
+                            </div>
+                             <div class="mb-3">
+                                <label class="form-label fw-bold">Mô tả</label>
+                                <InputTextArea class="form-control" @bind-Value="course.Description" rows="4" />
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Giá gốc</label>
+                                    <InputNumber class="form-control" @bind-Value="course.Price" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Giá sale</label>
+                                    <InputNumber class="form-control" @bind-Value="course.SalePrice" />
+                                </div>
+                            </div>
+                             <div class="mb-3">
+                                <label class="form-label fw-bold">Link ảnh</label>
+                                <InputText class="form-control" @bind-Value="course.ThumbnailURL" />
+                            </div>
+
+                            <button type="submit" class="btn btn-warning w-100 fw-bold">Cập nhật thay đổi</button>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private CourseDto? course;
+    private List<CategoryDto>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await localStorage.GetItemAsync<string>("authToken");
+        if (string.IsNullOrEmpty(token)) nav.NavigateTo("/login");
+
+        categories = await catService.GetCategories();
+        course = await courseService.GetCourseById(Id);
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (course != null)
+        {
+            bool success = await courseService.UpdateCourse(Id, course);
+            if (success) nav.NavigateTo("/manage-courses");
+            else Console.WriteLine("Lỗi cập nhật");
+        }
+    }
+}

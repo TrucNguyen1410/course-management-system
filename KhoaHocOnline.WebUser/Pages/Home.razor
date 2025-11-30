@@ -1,0 +1,140 @@
+﻿@page "/"
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@inject CourseService CourseService
+@inject CategoryService CategoryService
+@inject NavigationManager Navigation
+
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-primary text-uppercase">EDU PRO ONLINE</h2>
+        <p class="text-muted">Hệ thống khóa học trực tuyến hàng đầu</p>
+    </div>
+    
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <div class="input-group shadow-sm">
+                <input @bind="keyword" @bind:event="oninput" @onkeyup="HandleSearch" 
+                       type="text" class="form-control border-primary py-2" 
+                       placeholder="Tìm kiếm khóa học bạn quan tâm...">
+                <button class="btn btn-primary" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center gap-2 mb-5">
+        <button class="btn @(selectedCategoryId == 0 ? "btn-warning text-white fw-bold" : "btn-primary")"
+                @onclick="() => FilterCourses(0)">Tất cả</button>
+        @if (categories != null)
+        {
+            @foreach (var cat in categories)
+            {
+                <button class="btn @(selectedCategoryId == cat.CategoryID ? "btn-warning text-white fw-bold" : "btn-primary")"
+                        @onclick="() => FilterCourses(cat.CategoryID)">@cat.CategoryName</button>
+            }
+        }
+    </div>
+
+    @if (filteredCourses == null)
+    {
+        <p class="text-center">Đang tải...</p>
+    }
+    else if (filteredCourses.Count == 0)
+    {
+        <p class="text-center text-muted">Không tìm thấy khóa học nào.</p>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+            @foreach (var item in filteredCourses)
+            {
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm course-card">
+                        <div class="position-relative" style="cursor: pointer;" @onclick="() => ViewDetail(item.CourseID)">
+                            <img src="@(string.IsNullOrEmpty(item.ThumbnailURL) ? "https://via.placeholder.com/300x200" : item.ThumbnailURL)" class="card-img-top" style="height: 180px; object-fit: cover;">
+                            <span class="category-tag">@(item.Category?.CategoryName ?? "General")</span>
+                        </div>
+                        <div class="card-body pt-3 d-flex flex-column">
+                            <h6 class="card-title fw-bold text-dark mb-2 text-truncate-2">@item.Title</h6>
+                            <div class="mt-auto pt-2">
+                                @if (item.SalePrice > 0)
+                                {
+                                    <span class="text-danger fw-bold fs-5 me-2">@item.SalePrice?.ToString("#,##0") đ</span>
+                                    <span class="text-muted text-decoration-line-through small">@item.Price.ToString("#,##0") đ</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold fs-5">@item.Price.ToString("#,##0") đ</span>
+                                }
+                            </div>
+                            <button class="btn btn-outline-primary w-100 mt-3 rounded-pill fw-bold" @onclick="() => ViewDetail(item.CourseID)">Xem ngay</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Giữ nguyên CSS cũ của bạn */
+    .course-card { border-radius: 10px; transition: transform 0.3s; background: #fff; }
+    .course-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1)!important; }
+    .category-tag { position: absolute; bottom: 10px; left: 10px; background: rgba(255,255,255,0.9); color: #004085; font-weight: bold; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; }
+    .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px; }
+    .btn-primary { background-color: #004085; border: none; }
+    .btn-warning { background-color: #f68b1f; border: none; }
+</style>
+
+@code {
+    private List<CourseDto>? allCourses; 
+    private List<CourseDto>? filteredCourses;
+    private List<CategoryDto>? categories;
+    private int selectedCategoryId = 0;
+    private string keyword = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var taskCourses = CourseService.GetCourses();
+        var taskCategories = CategoryService.GetCategories();
+        await Task.WhenAll(taskCourses, taskCategories);
+        allCourses = await taskCourses;
+        categories = await taskCategories;
+        filteredCourses = allCourses;
+    }
+
+    private void FilterCourses(int categoryId)
+    {
+        selectedCategoryId = categoryId;
+        ApplyFilter();
+    }
+
+    private void HandleSearch()
+    {
+        ApplyFilter();
+    }
+
+    // Hàm lọc kết hợp cả Danh mục và Từ khóa
+    private void ApplyFilter()
+    {
+        var temp = allCourses;
+
+        // 1. Lọc theo danh mục
+        if (selectedCategoryId != 0)
+        {
+            temp = temp?.Where(c => c.CategoryID == selectedCategoryId).ToList();
+        }
+
+        // 2. Lọc theo từ khóa
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            temp = temp?.Where(c => c.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        filteredCourses = temp;
+    }
+
+    private void ViewDetail(int id) => Navigation.NavigateTo($"course-details/{id}");
+}

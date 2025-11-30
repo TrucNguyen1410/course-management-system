@@ -1,0 +1,211 @@
+@page "/manage-curriculum"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject CourseService CourseService
+@inject ChapterService ChapterService
+@inject IJSRuntime JSRuntime
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <h3 class="text-primary fw-bold mb-4">Quản Lý Chương Trình Học</h3>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-book-fill me-2"></i>Chọn Khóa Học
+                </div>
+                <div class="card-body">
+                    @if (courses == null)
+                    {
+                        <p>Đang tải khóa học...</p>
+                    }
+                    else
+                    {
+                        <select class="form-select" @onchange="OnCourseSelected" size="10">
+                            <option value="0" disabled selected>-- Danh sách khóa học --</option>
+                            @foreach (var c in courses)
+                            {
+                                <option value="@c.CourseID">@c.Title</option>
+                            }
+                        </select>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            @if (selectedCourseId == 0)
+            {
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-arrow-left-circle me-2"></i>Vui lòng chọn một khóa học bên trái để quản lý nội dung.
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-dark">Nội dung chi tiết</h5>
+                        <button class="btn btn-success btn-sm" @onclick="OpenCreateMode">
+                            <i class="bi bi-plus-lg"></i> Thêm Chương
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tên Chương</th>
+                                    <th>Mô tả ngắn</th>
+                                    <th class="text-center">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (chapters == null || chapters.Count == 0)
+                                {
+                                    <tr><td colspan="3" class="text-center py-4 text-muted">Chưa có chương nào. Hãy thêm mới!</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in chapters)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold text-primary">@item.Title</td>
+                                            <td>
+                                                <small class="text-muted">@item.Description</small>
+                                                @if(!string.IsNullOrEmpty(item.VideoURL)) { <i class="bi bi-camera-video-fill text-danger ms-2" title="Có video"></i> }
+                                                @if(!string.IsNullOrEmpty(item.Content)) { <i class="bi bi-file-text-fill text-info ms-1" title="Có nội dung"></i> }
+                                            </td>
+                                            <td class="text-center" style="width: 120px;">
+                                                <button class="btn btn-sm btn-outline-primary mx-1" @onclick="() => OpenEditMode(item)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger mx-1" @onclick="() => HandleDelete(item)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (isFormVisible)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">@(isEditMode ? "Chỉnh Sửa Chương" : "Thêm Chương Mới")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseForm"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên chương</label>
+                        <input @bind="currentChapter.Title" class="form-control" placeholder="VD: Chương 1 - Giới thiệu tổng quan" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Link Video (YouTube)</label>
+                        <input @bind="currentChapter.VideoURL" class="form-control" placeholder="VD: https://www.youtube.com/watch?v=..." />
+                        <small class="text-muted">Hỗ trợ link trực tiếp từ YouTube.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô tả ngắn</label>
+                        <input @bind="currentChapter.Description" class="form-control" placeholder="Mô tả tóm tắt..." />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nội dung bài học (Chi tiết)</label>
+                        <textarea @bind="currentChapter.Content" class="form-control" rows="6" placeholder="Nhập nội dung văn bản, bài tập..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseForm">Hủy bỏ</button>
+                    <button class="btn btn-success fw-bold" @onclick="HandleSubmit">
+                        <i class="bi bi-save me-2"></i>Lưu lại
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CourseDto>? courses;
+    private List<ChapterDto>? chapters;
+    private int selectedCourseId = 0;
+    
+    private bool isFormVisible = false;
+    private bool isEditMode = false;
+    private ChapterDto currentChapter = new ChapterDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await CourseService.GetCourses();
+    }
+
+    private async Task OnCourseSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedCourseId = id;
+            if (id > 0) chapters = await ChapterService.GetChaptersByCourse(id);
+        }
+    }
+
+    private void OpenCreateMode()
+    {
+        currentChapter = new ChapterDto { CourseID = selectedCourseId };
+        isEditMode = false;
+        isFormVisible = true;
+    }
+
+    private void OpenEditMode(ChapterDto chapter)
+    {
+        currentChapter = new ChapterDto 
+        { 
+            ChapterID = chapter.ChapterID,
+            Title = chapter.Title,
+            Description = chapter.Description,
+            VideoURL = chapter.VideoURL,
+            Content = chapter.Content,
+            CourseID = chapter.CourseID
+        };
+        isEditMode = true;
+        isFormVisible = true;
+    }
+
+    private void CloseForm() => isFormVisible = false;
+
+    private async Task HandleSubmit()
+    {
+        if(string.IsNullOrEmpty(currentChapter.Title)) return;
+
+        bool success;
+        if (isEditMode) success = await ChapterService.UpdateChapter(currentChapter.ChapterID, currentChapter);
+        else success = await ChapterService.CreateChapter(currentChapter);
+
+        if (success)
+        {
+            CloseForm();
+            chapters = await ChapterService.GetChaptersByCourse(selectedCourseId);
+        }
+    }
+
+    private async Task HandleDelete(ChapterDto chapter)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn có chắc chắn muốn xóa chương: {chapter.Title}?");
+        if (confirm)
+        {
+            await ChapterService.DeleteChapter(chapter.ChapterID);
+            chapters = await ChapterService.GetChaptersByCourse(selectedCourseId);
+        }
+    }
+}

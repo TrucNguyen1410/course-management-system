@@ -1,0 +1,210 @@
+@page "/course-registration/{courseId:int}"
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@using System.Security.Claims 
+@using Microsoft.AspNetCore.Components.Authorization 
+@using KhoaHocOnline.WebUser.Layout 
+@inject CourseService CourseService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime 
+@attribute [Microsoft.AspNetCore.Authorization.Authorize] 
+@layout RegistrationLayout
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0 fw-bold text-uppercase">Đăng Ký Khóa Học</h4>
+                </div>
+                <div class="card-body p-4">
+                    @if (course == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Đang tải thông tin...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border border-primary shadow-sm mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="fw-bold text-primary mb-1">@course.Title</h5>
+                                    <span class="text-muted small">Giá gốc: @OriginalPrice.ToString("#,##0") đ</span>
+                                </div>
+                                <div class="text-end">
+                                    @if (DiscountAmount > 0)
+                                    {
+                                        <div class="text-success fw-bold small">- @DiscountAmount.ToString("#,##0") đ</div>
+                                    }
+                                    <h3 class="text-danger fw-bold mb-0">@FinalPrice.ToString("#,##0") đ</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Mã giảm giá</label>
+                            <div class="input-group">
+                                <input @bind="voucherCode" class="form-control border-primary" placeholder="Nhập mã Voucher (VD: SALE50)" />
+                                <button class="btn btn-outline-primary fw-bold" type="button" @onclick="ApplyVoucher">
+                                    Áp dụng
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(voucherMessage))
+                            {
+                                <div class="mt-2 small fw-bold @(isVoucherValid ? "text-success" : "text-danger")">
+                                    @voucherMessage
+                                </div>
+                            }
+                        </div>
+
+                        <hr class="my-4 opacity-25">
+
+                        <form @onsubmit="HandleRegistration">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Họ và Tên học viên <span class="text-danger">*</span></label>
+                                <input @bind="registerModel.FullName" class="form-control py-2" required placeholder="Nhập họ tên đầy đủ" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Ngày sinh</label>
+                                    <input @bind="registerModel.DateOfBirth" type="date" class="form-control py-2" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Thời gian có thể học</label>
+                                    <select @bind="registerModel.PreferredTime" class="form-select py-2">
+                                        <option value="Sáng">Buổi Sáng (8h - 11h)</option>
+                                        <option value="Chiều">Buổi Chiều (14h - 17h)</option>
+                                        <option value="Tối">Buổi Tối (18h - 21h)</option>
+                                        <option value="Linh hoạt">Thời gian linh hoạt</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Địa chỉ liên hệ</label>
+                                <input @bind="registerModel.Address" class="form-control py-2" placeholder="Số nhà, đường, phường/xã, quận/huyện..." />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ghi chú thêm (nếu có)</label>
+                                <textarea @bind="registerModel.Note" class="form-control" rows="3" placeholder="Bạn có yêu cầu đặc biệt nào không?"></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success py-3 fw-bold fs-5 shadow-sm">
+                                    XÁC NHẬN ĐĂNG KÝ (@FinalPrice.ToString("#,##0") đ)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary py-2" @onclick='() => Navigation.NavigateTo($"course-details/{CourseId}")'>
+                                    Hủy bỏ / Quay lại
+                                </button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+    private CourseDto? course;
+    private RegisterCourseDto registerModel = new RegisterCourseDto();
+
+    // Các biến xử lý Voucher và Giá tiền
+    private string voucherCode = "";
+    private string voucherMessage = "";
+    private bool isVoucherValid = false;
+    private decimal OriginalPrice = 0;
+    private decimal DiscountAmount = 0;
+    private decimal FinalPrice = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Lấy thông tin khóa học
+        course = await CourseService.GetCourseById(CourseId);
+        
+        // 2. Lấy thông tin User đang đăng nhập
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userIdClaim = user.FindFirst("UserId");
+            if (userIdClaim != null) registerModel.UserID = userIdClaim.Value;
+            registerModel.FullName = user.Identity.Name ?? ""; 
+        }
+        
+        // 3. Thiết lập giá ban đầu
+        OriginalPrice = course?.SalePrice ?? course?.Price ?? 0;
+        FinalPrice = OriginalPrice; // Ban đầu chưa giảm giá thì Giá cuối = Giá gốc
+        
+        registerModel.CourseID = CourseId;
+        registerModel.PreferredTime = "Tối"; 
+    }
+
+    // Hàm xử lý khi bấm nút "Áp dụng" Voucher
+    private async Task ApplyVoucher()
+    {
+        if (string.IsNullOrWhiteSpace(voucherCode)) return;
+
+        // Gọi API kiểm tra mã Voucher
+        var voucher = await CourseService.CheckVoucher(voucherCode.ToUpper());
+
+        if (voucher != null)
+        {
+            isVoucherValid = true;
+            voucherMessage = "Áp dụng mã giảm giá thành công!";
+
+            // Tính toán số tiền được giảm
+            if (voucher.IsPercentage)
+            {
+                DiscountAmount = OriginalPrice * (voucher.DiscountValue / 100);
+            }
+            else
+            {
+                DiscountAmount = voucher.DiscountValue;
+            }
+
+            // Tính giá cuối cùng (không được âm)
+            FinalPrice = OriginalPrice - DiscountAmount;
+            if (FinalPrice < 0) FinalPrice = 0;
+        }
+        else
+        {
+            isVoucherValid = false;
+            voucherMessage = "Mã giảm giá không hợp lệ hoặc đã hết hạn.";
+            
+            // Reset về giá gốc nếu mã sai
+            DiscountAmount = 0;
+            FinalPrice = OriginalPrice;
+        }
+    }
+
+    private async Task HandleRegistration()
+    {
+        // Cập nhật giá tiền đã giảm vào Model trước khi gửi đi
+        registerModel.Price = FinalPrice; 
+        
+        // Ghi chú thêm mã voucher vào đơn hàng (để Admin biết)
+        if(isVoucherValid) 
+        {
+            registerModel.Note = $"[Voucher: {voucherCode}] " + registerModel.Note;
+        }
+
+        bool success = await CourseService.RegisterCourse(registerModel);
+        
+        if (success)
+        {
+            Navigation.NavigateTo($"registration-success/{CourseId}");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi đăng ký! Có thể bạn đã đăng ký khóa học này rồi.");
+        }
+    }
+}

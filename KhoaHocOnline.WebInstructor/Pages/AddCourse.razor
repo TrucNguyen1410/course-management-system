@@ -1,0 +1,100 @@
+@page "/add-course"
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@using KhoaHocOnline.WebAdmin.Services
+@using Blazored.LocalStorage
+@inject CourseService courseService
+@inject CategoryService catService
+@inject NavigationManager navigationManager
+@inject ILocalStorageService localStorage 
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm Khóa Học Mới</h5>
+                    <a href="manage-courses" class="btn btn-sm btn-light text-primary">Quay lại</a>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@course" OnValidSubmit="HandleAddCourse">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Danh Mục <span class="text-danger">*</span></label>
+                            <InputSelect class="form-select" @bind-Value="course.CategoryID">
+                                <option value="">-- Chọn danh mục --</option>
+                                @if (categories != null)
+                                {
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.CategoryID">@cat.CategoryName</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên khóa học <span class="text-danger">*</span></label>
+                            <InputText class="form-control" @bind-Value="course.Title" required />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả</label>
+                            <InputTextArea class="form-control" @bind-Value="course.Description" rows="4" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá gốc (VNĐ)</label>
+                                <InputNumber class="form-control" @bind-Value="course.Price" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá khuyến mãi (VNĐ)</label>
+                                <InputNumber class="form-control" @bind-Value="course.SalePrice" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Link ảnh (URL)</label>
+                            <InputText class="form-control" @bind-Value="course.ThumbnailURL" placeholder="https://..." />
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2" disabled="@isLoading">
+                            @if(isLoading) { <span>Đang lưu...</span> } else { <span><i class="bi bi-save"></i> Lưu Khóa Học</span> }
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CourseDto course = new CourseDto(); 
+    private List<CategoryDto>? categories;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Kiểm tra đăng nhập
+        var token = await localStorage.GetItemAsync<string>("authToken");
+        if (string.IsNullOrEmpty(token)) navigationManager.NavigateTo("/login");
+
+        // Load danh mục để đổ vào dropdown
+        categories = await catService.GetCategories();
+        
+        // Chọn mặc định cái đầu tiên nếu có (để đỡ bị lỗi null)
+        if (categories != null && categories.Count > 0)
+        {
+            course.CategoryID = categories[0].CategoryID;
+        }
+    }
+
+    private async Task HandleAddCourse()
+    {
+        isLoading = true;
+        bool success = await courseService.CreateCourse(course);
+        isLoading = false;
+
+        if (success) navigationManager.NavigateTo("/manage-courses");
+    }
+}

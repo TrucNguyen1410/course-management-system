@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Portal - EduPro Online</title>
+    <base href="/" />
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="KhoaHocOnline.WebAdmin.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <div style="position:absolute; top:30vh; width:100%; text-align:center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>Đang tải hệ thống...</p>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        window.renderCharts = (revenueData, categoryData) => {
+            const ctxRevenue = document.getElementById('revenueChart');
+            if (ctxRevenue) {
+                if(window.myRevenueChart) window.myRevenueChart.destroy();
+                window.myRevenueChart = new Chart(ctxRevenue, {
+                    type: 'line',
+                    data: {
+                        labels: revenueData.map(x => x.label),
+                        datasets: [{
+                            label: 'Doanh thu (VNĐ)',
+                            data: revenueData.map(x => x.value),
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderWidth: 2,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxCategory = document.getElementById('categoryChart');
+            if (ctxCategory) {
+                if(window.myCategoryChart) window.myCategoryChart.destroy();
+                window.myCategoryChart = new Chart(ctxCategory, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryData.map(x => x.label),
+                        datasets: [{
+                            data: categoryData.map(x => x.value),
+                            backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0', '#9966ff']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>

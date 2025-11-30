@@ -1,0 +1,70 @@
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@inject AuthService AuthService
+
+@if (IsVisible)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0 rounded-3">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary mx-auto fs-4">ĐĂNG NHẬP</h5>
+                    <button type="button" class="btn-close position-absolute end-0 top-0 m-3" @onclick="CloseModal"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger text-center py-2 mb-3">@errorMessage</div>
+                    }
+
+                    <div class="mb-3">
+                        <input @bind="loginModel.Email" class="form-control py-2" placeholder="Email (Ví dụ: user@gmail.com)" />
+                    </div>
+                    <div class="mb-3">
+                        <input @bind="loginModel.Password" type="password" class="form-control py-2" placeholder="Mật khẩu" />
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-2 fw-bold mb-3" @onclick="HandleLogin">
+                        ĐĂNG NHẬP
+                    </button>
+
+                    <div class="text-center">
+                        <small class="text-muted">Chưa có tài khoản? <a href="register" class="text-decoration-none fw-bold">Đăng ký ngay</a></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback OnLoginSuccess { get; set; } // Sự kiện báo ra ngoài là đã login xong
+
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private void CloseModal()
+    {
+        IsVisible = false;
+        IsVisibleChanged.InvokeAsync(false);
+        errorMessage = null;
+    }
+
+    private async Task HandleLogin()
+    {
+        var result = await AuthService.Login(loginModel);
+        if (result.IsSuccess)
+        {
+            // Đăng nhập thành công -> Đóng modal -> Báo cho cha biết
+            await IsVisibleChanged.InvokeAsync(false);
+            await OnLoginSuccess.InvokeAsync();
+        }
+        else
+        {
+            errorMessage = result.ErrorMessage;
+        }
+    }
+}

@@ -1,0 +1,130 @@
+@page "/manage-progress"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject EnrollmentService EnrollmentService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <h3 class="text-primary fw-bold mb-4">Theo Dõi Tiến Độ Học Tập</h3>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            
+            <div class="mb-3 w-50">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input class="form-control" 
+                           placeholder="Tìm theo tên học viên hoặc tên khóa học..." 
+                           value="@searchTerm"
+                           @oninput="HandleSearch" />
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th class="text-start">Học viên</th>
+                            <th class="text-start">Khóa học</th>
+                            <th>Tiến độ</th>
+                            <th>Chi tiết</th>
+                            <th>Học gần nhất</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (filteredList == null)
+                        {
+                            <tr><td colspan="5" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                        }
+                        else if (filteredList.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy kết quả nào.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in filteredList)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-primary">@item.StudentName</div>
+                                    </td>
+                                    <td class="fw-semibold">@item.CourseName</td>
+                                    
+                                    <td style="width: 25%;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1" style="height: 20px;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated @GetColor(item.Percent)" 
+                                                     role="progressbar" 
+                                                     style="width: @item.Percent%;">
+                                                    @item.Percent%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border">
+                                            @item.CompletedChapters / @item.TotalChapters bài
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center small text-muted">
+                                        @if (item.LastActiveDate.HasValue)
+                                        {
+                                            @item.LastActiveDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger fst-italic">Chưa học</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<StudentProgressDto>? fullList;
+    private List<StudentProgressDto>? filteredList;
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        fullList = await EnrollmentService.GetStudentProgress();
+        filteredList = fullList;
+    }
+
+    private void HandleSearch(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        FilterData();
+    }
+
+    private void FilterData()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredList = fullList;
+        }
+        else
+        {
+            filteredList = fullList?.Where(x => 
+                x.StudentName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
+                x.CourseName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    private string GetColor(int percent)
+    {
+        if (percent == 0) return "bg-secondary";
+        if (percent < 50) return "bg-warning text-dark";
+        if (percent < 100) return "bg-info text-dark";
+        return "bg-success";
+    }
+}

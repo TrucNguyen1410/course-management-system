@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    <header class="bg-white shadow-sm py-3 mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold text-primary fs-4 text-uppercase" href="/">
+                EduPro Online
+            </a>
+            <a href="/" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-house-door-fill"></i> Về trang chủ
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        @Body
+    </main>
+
+    <footer class="text-center py-4 text-muted mt-5 border-top">
+        <small>&copy; 2024 EduPro Online. All rights reserved.</small>
+    </footer>
+</div>

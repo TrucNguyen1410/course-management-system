@@ -1,0 +1,78 @@
+@page "/course-details/{id:int}"
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@using System.Security.Claims
+@inject CourseService CourseService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="container mt-5 mb-5">
+    @if (course == null)
+    {
+        <p class="text-center">Đang tải...</p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">@course.Title</li>
+                    </ol>
+                </nav>
+                <h1 class="fw-bold text-primary mb-3">@course.Title</h1>
+                <p class="lead text-muted">@course.Description</p>
+                </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow border-0 sticky-top" style="top: 20px;">
+                    <img src="@course.ThumbnailURL" class="card-img-top" alt="Thumbnail">
+                    <div class="card-body">
+                        <h3 class="text-danger fw-bold mb-3">@course.Price.ToString("#,##0") đ</h3>
+                        
+                        <button class="btn btn-danger w-100 py-3 fw-bold fs-5" @onclick="CheckLoginAndRegister">
+                            ĐĂNG KÝ NGAY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<LoginModal @bind-IsVisible="showLoginModal" OnLoginSuccess="GoToRegistration" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private CourseDto? course;
+    private bool showLoginModal = false; // Biến bật tắt modal
+
+    protected override async Task OnInitializedAsync()
+    {
+        course = await CourseService.GetCourseById(Id);
+    }
+
+    private async Task CheckLoginAndRegister()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // Đã đăng nhập -> Đi thẳng tới trang đăng ký
+            GoToRegistration();
+        }
+        else
+        {
+            // Chưa đăng nhập -> Hiện Modal
+            showLoginModal = true;
+        }
+    }
+
+    private void GoToRegistration()
+    {
+        // Hàm này được gọi khi đã Login xong hoặc Modal báo thành công
+        Navigation.NavigateTo($"course-registration/{Id}");
+    }
+}

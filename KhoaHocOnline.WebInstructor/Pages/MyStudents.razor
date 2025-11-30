@@ -1,0 +1,50 @@
+@page "/my-students"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject EnrollmentService EnrollmentService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <h3 class="text-success fw-bold mb-4">Danh Sách Học Viên Của Tôi</h3>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-success text-center">
+                        <tr>
+                            <th>Học viên</th>
+                            <th>Khóa học đăng ký</th>
+                            <th>Ngày đăng ký</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (enrollments == null) { <tr><td colspan="4" class="text-center py-4">Đang tải...</td></tr> }
+                        else
+                        {
+                            @foreach (var item in enrollments.Where(e => e.IsPaid)) {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@item.FullName</div>
+                                        <small class="text-muted">@item.Email</small>
+                                    </td>
+                                    <td class="fw-semibold text-primary">@item.CourseTitle</td>
+                                    <td class="text-center">@item.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">Đã vào học</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<EnrollmentDto>? enrollments;
+    protected override async Task OnInitializedAsync() { enrollments = await EnrollmentService.GetEnrollments(); }
+}

@@ -1,0 +1,168 @@
+@page "/manage-enrollments"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject EnrollmentService EnrollmentService
+@inject IJSRuntime JSRuntime
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <h3 class="text-primary fw-bold mb-4">Quản Lý Học Viên & Đơn Hàng</h3>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            
+            <div class="d-flex gap-2 mb-3">
+                <button class="btn btn-sm @(filterStatus == 0 ? "btn-secondary" : "btn-outline-secondary")" 
+                        @onclick="() => FilterList(0)">
+                    Tất cả
+                </button>
+                
+                <button class="btn btn-sm @(filterStatus == 1 ? "btn-success" : "btn-outline-success")" 
+                        @onclick="() => FilterList(1)">
+                    Đã thanh toán
+                </button>
+                
+                <button class="btn btn-sm @(filterStatus == 2 ? "btn-warning text-dark" : "btn-outline-warning")" 
+                        @onclick="() => FilterList(2)">
+                    Chờ thanh toán
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Mã ĐH</th>
+                            <th>Thông tin Học viên</th>
+                            <th>Khóa học</th>
+                            <th>Học phí</th>
+                            <th>Ngày ĐK</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (filteredList == null)
+                        {
+                            <tr><td colspan="7" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                        }
+                        else if (filteredList.Count == 0)
+                        {
+                            <tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy đơn hàng nào.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in filteredList)
+                            {
+                                <tr>
+                                    <td class="text-center fw-bold">#@item.EnrollmentID</td>
+                                    <td>
+                                        <div class="fw-bold text-primary">@item.FullName</div>
+                                        <div class="small text-muted">@item.Email</div>
+                                    </td>
+                                    <td class="fw-semibold">@item.CourseTitle</td>
+                                    <td class="text-center text-danger fw-bold">
+                                        @item.PriceAtEnrollment.ToString("#,##0") đ
+                                    </td>
+                                    <td class="text-center">@item.EnrollmentDate.ToString("dd/MM HH:mm")</td>
+                                    
+                                    <td class="text-center">
+                                        @if (item.IsPaid)
+                                        {
+                                            <span class="badge bg-success">Đã thanh toán</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button class="btn btn-sm btn-success @(item.IsPaid ? "invisible" : "")" 
+                                                    title="Xác nhận tiền về" 
+                                                    @onclick="() => ConfirmPay(item)"
+                                                    disabled="@item.IsPaid">
+                                                <i class="bi bi-check-lg"></i> Duyệt
+                                            </button>
+                                            
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    title="Xóa đơn" 
+                                                    @onclick="() => DeleteOrder(item)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<EnrollmentDto>? allEnrollments; // Danh sách gốc (Full)
+    private List<EnrollmentDto>? filteredList;   // Danh sách đang hiển thị (Đã lọc)
+    
+    private int filterStatus = 0; // 0: Tất cả, 1: Đã thanh toán, 2: Chờ thanh toán
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Lấy dữ liệu gốc từ API
+        allEnrollments = await EnrollmentService.GetEnrollments();
+        
+        // Mặc định hiển thị tất cả
+        FilterList(filterStatus);
+    }
+
+    // HÀM LỌC DỮ LIỆU
+    private void FilterList(int status)
+    {
+        filterStatus = status;
+
+        if (allEnrollments == null) return;
+
+        if (status == 0) // Tất cả
+        {
+            filteredList = allEnrollments;
+        }
+        else if (status == 1) // Đã thanh toán (IsPaid = true)
+        {
+            filteredList = allEnrollments.Where(x => x.IsPaid).ToList();
+        }
+        else if (status == 2) // Chờ thanh toán (IsPaid = false)
+        {
+            filteredList = allEnrollments.Where(x => !x.IsPaid).ToList();
+        }
+    }
+
+    private async Task ConfirmPay(EnrollmentDto item)
+    {
+        if (item.IsPaid) return;
+
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Xác nhận học viên {item.FullName} đã thanh toán?");
+        if (confirm)
+        {
+            var success = await EnrollmentService.ConfirmPayment(item.EnrollmentID);
+            if (success) await LoadData(); // Tải lại để cập nhật danh sách
+        }
+    }
+
+    private async Task DeleteOrder(EnrollmentDto item)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Xóa đơn hàng #{item.EnrollmentID}?");
+        if (confirm)
+        {
+            var success = await EnrollmentService.DeleteEnrollment(item.EnrollmentID);
+            if (success) await LoadData(); // Tải lại để cập nhật danh sách
+        }
+    }
+}

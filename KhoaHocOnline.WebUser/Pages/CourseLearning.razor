@@ -1,0 +1,213 @@
+@page "/course-learning/{courseId:int}"
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CourseService CourseService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container-fluid mt-3">
+    @if (course == null)
+    {
+        <div class="text-center text-muted pt-5">Đang tải nội dung...</div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-9" style="height: 90vh; overflow-y: auto;">
+                
+                <div class="bg-black rounded mb-4 py-3 d-flex justify-content-center shadow">
+                    <div class="ratio ratio-16x9" style="max-width: 850px; width: 100%;">
+                        @if (!string.IsNullOrEmpty(currentVideoUrl))
+                        {
+                            <iframe src="@currentVideoUrl" title="Bài giảng" allowfullscreen style="border-radius: 8px;"></iframe>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center text-white h-100 bg-secondary rounded">
+                                <h4><i class="bi bi-camera-video-off me-2"></i>Bài học này không có Video</h4>
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-0 mb-5 mx-auto" style="max-width: 900px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="fw-bold text-primary mb-0 fs-4">@currentChapterTitle</h2>
+                            
+                            @if (completedChapterIds.Contains(currentChapterId))
+                            {
+                                <button class="btn btn-success disabled fw-bold px-3 btn-sm">
+                                    <i class="bi bi-check-circle-fill me-2"></i>Đã hoàn thành
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-primary fw-bold px-3 btn-sm" @onclick="MarkAsCompleted">
+                                    <i class="bi bi-check2-circle me-2"></i>Đánh dấu hoàn thành
+                                </button>
+                            }
+                        </div>
+                        
+                        @if(!string.IsNullOrEmpty(currentChapterDesc))
+                        {
+                            <div class="p-3 bg-light rounded border mb-3 small text-muted fst-italic">
+                                <strong>Giới thiệu:</strong> @currentChapterDesc
+                            </div>
+                        }
+
+                        <hr/>
+                        
+                        <div class="content-area mt-3" style="font-size: 1rem; line-height: 1.6; color: #333; white-space: pre-line;">
+                            @currentChapterContent
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 p-0 border-start bg-white" style="height: 90vh; display: flex; flex-direction: column;">
+                <div class="p-3 bg-primary text-white fw-bold shadow-sm">
+                    <i class="bi bi-list-ul me-2"></i>DANH SÁCH BÀI HỌC
+                </div>
+                
+                <div class="list-group list-group-flush overflow-auto flex-grow-1">
+                    @if (course.Chapters != null && course.Chapters.Count > 0)
+                    {
+                        int index = 1;
+                        @foreach (var chap in course.Chapters)
+                        {
+                            <button class="list-group-item list-group-item-action py-3 border-bottom 
+                                           @(chap.ChapterID == currentChapterId ? "bg-primary bg-opacity-10 border-start border-primary border-4" : "")"
+                                    @onclick="() => SelectChapter(chap)">
+                                
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <div class="d-flex align-items-center overflow-hidden me-2 text-start">
+                                        <span class="fw-bold me-2 text-muted flex-shrink-0">@index.</span>
+                                        <div>
+                                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.9rem; max-width: 130px;" title="@chap.Title">
+                                                @chap.Title
+                                            </div>
+                                            @if(!string.IsNullOrEmpty(chap.VideoURL))
+                                            {
+                                                <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-play-circle me-1"></i>Video</small>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-file-text me-1"></i>Bài đọc</small>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex-shrink-0 text-end">
+                                        @if (completedChapterIds.Contains(chap.ChapterID))
+                                        {
+                                            <span class="badge bg-success rounded-pill" style="font-size: 0.65rem;">Hoàn thành</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger fw-bold" style="font-size: 0.65rem;">Chưa học</span>
+                                        }
+                                    </div>
+                                </div>
+                            </button>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">Chưa có bài học nào.</div>
+                    }
+                </div>
+
+                <div class="p-3 border-top bg-light">
+                    <button class="btn btn-outline-danger w-100 fw-bold" @onclick='() => Navigation.NavigateTo("my-courses")'>
+                        <i class="bi bi-box-arrow-left me-2"></i>Thoát ra
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+    private CourseDto? course;
+    private string userId = "";
+    private List<int> completedChapterIds = new List<int>();
+
+    private int currentChapterId;
+    private string currentChapterTitle = "";
+    private string currentChapterDesc = "";
+    private string currentChapterContent = "";
+    private string currentVideoUrl = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            userId = user.FindFirst("UserId")?.Value ?? "";
+        }
+
+        course = await CourseService.GetCourseById(CourseId);
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            completedChapterIds = await CourseService.GetCompletedChapters(userId, CourseId);
+        }
+
+        if (course?.Chapters != null && course.Chapters.Count > 0)
+        {
+            SelectChapter(course.Chapters[0]);
+        }
+    }
+
+    private void SelectChapter(ChapterDto chapter)
+    {
+        currentChapterId = chapter.ChapterID;
+        currentChapterTitle = chapter.Title;
+        currentChapterDesc = chapter.Description;
+        currentChapterContent = chapter.Content; 
+        currentVideoUrl = ConvertToEmbedUrl(chapter.VideoURL); 
+        StateHasChanged();
+    }
+
+    private async Task MarkAsCompleted()
+    {
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await CourseService.MarkChapterComplete(userId, currentChapterId, CourseId);
+            
+            if (!completedChapterIds.Contains(currentChapterId))
+            {
+                completedChapterIds.Add(currentChapterId);
+                StateHasChanged(); 
+            }
+        }
+    }
+
+    private string ConvertToEmbedUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return "";
+        if (url.Contains("embed")) return url;
+        try
+        {
+            if (url.Contains("youtube.com/watch?v="))
+            {
+                var videoId = url.Split("v=")[1].Split("&")[0];
+                return $"https://www.youtube.com/embed/{videoId}?autoplay=1";
+            }
+            if (url.Contains("youtu.be/"))
+            {
+                var videoId = url.Split("youtu.be/")[1];
+                return $"https://www.youtube.com/embed/{videoId}?autoplay=1";
+            }
+        }
+        catch {}
+        return url;
+    }
+}

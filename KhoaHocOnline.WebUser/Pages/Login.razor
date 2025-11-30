@@ -1,0 +1,51 @@
+@page "/login"
+@using KhoaHocOnline.WebUser.Services
+@using KhoaHocOnline.WebUser.Models.DTOs
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card p-4 shadow-sm" style="width: 400px;">
+        <h3 class="text-center text-primary fw-bold mb-4">ĐĂNG NHẬP</h3>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger text-center">@errorMessage</div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input @bind="loginModel.Email" class="form-control" placeholder="user@gmail.com" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mật khẩu</label>
+            <input @bind="loginModel.Password" type="password" class="form-control" />
+        </div>
+
+        <button class="btn btn-primary w-100 fw-bold" @onclick="HandleLogin">Đăng Nhập</button>
+        
+        <div class="text-center mt-3">
+            <a href="register" class="text-decoration-none">Chưa có tài khoản? Đăng ký ngay</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        // SỬA LỖI TẠI ĐÂY: Truyền cả object loginModel vào, thay vì truyền lẻ tẻ
+        var result = await AuthService.Login(loginModel);
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/", true);
+        }
+        else
+        {
+            errorMessage = result.ErrorMessage;
+        }
+    }
+}

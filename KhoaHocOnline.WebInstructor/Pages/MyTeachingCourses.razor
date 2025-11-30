@@ -1,0 +1,111 @@
+@page "/my-teaching-courses"
+@using KhoaHocOnline.WebAdmin.Services
+@using KhoaHocOnline.WebAdmin.Models.DTOs
+@inject CourseService CourseService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime 
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary fw-bold">Quản Lý Khóa Học</h3>
+        <button class="btn btn-success" @onclick='() => Navigation.NavigateTo("add-course")'>
+            <i class="bi bi-plus-circle"></i> Thêm Mới
+        </button>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded bg-white">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th style="width: 100px;">Hình ảnh</th>
+                    <th class="text-start">Tên Khóa Học</th>
+                    <th>Danh Mục</th> <th>Giá Gốc</th>
+                    <th>Giá Sale</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (courses == null)
+                {
+                    <tr><td colspan="6" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                }
+                else if (courses.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center py-4">Chưa có khóa học nào.</td></tr>
+                }
+                else
+                {
+                    @foreach (var item in courses)
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <img src="@(string.IsNullOrEmpty(item.ThumbnailURL) ? "https://via.placeholder.com/80x50" : item.ThumbnailURL)" 
+                                     class="rounded border" 
+                                     style="width: 80px; height: 50px; object-fit: cover;" />
+                            </td>
+                            
+                            <td class="fw-semibold text-primary">@item.Title</td>
+
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark">
+                                    @(item.Category?.CategoryName ?? "Chưa phân loại")
+                                </span>
+                            </td>
+
+                            <td class="text-center">@item.Price.ToString("#,##0") đ</td>
+                            
+                            <td class="text-center fw-bold text-danger">
+                                @(item.SalePrice.HasValue && item.SalePrice > 0 ? item.SalePrice.Value.ToString("#,##0") + " đ" : "-")
+                            </td>
+
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary mx-1" title="Sửa"
+                                        @onclick='() => Navigation.NavigateTo($"edit-course/{item.CourseID}")'>
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger mx-1" title="Xóa"
+                                        @onclick="() => HandleDelete(item)">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<CourseDto>? courses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        courses = await CourseService.GetCourses();
+    }
+
+    private async Task HandleDelete(CourseDto course)
+    {
+        // Hiện thông báo xác nhận trước khi xóa (dùng JavaScript)
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn có chắc muốn xóa khóa học '{course.Title}' không?");
+        
+        if (confirmed)
+        {
+            var success = await CourseService.DeleteCourse(course.CourseID);
+            if (success)
+            {
+                await LoadData(); // Tải lại bảng sau khi xóa
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Xóa thất bại! Có thể do khóa học này đã có học viên.");
+            }
+        }
+    }
+}
