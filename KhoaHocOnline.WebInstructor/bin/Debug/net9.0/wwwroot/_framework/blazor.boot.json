@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "KhoaHocOnline.WebInstructor",
   "resources": {
-    "hash": "sha256-eDPmHOAvHYkz0oZo+OFv9kr5Pk6CeAgO/wi6zOdzP14=",
+    "hash": "sha256-N466OKZj566W5vzNM8cBZMGKUalh4UQ2K2nEwG19OuA=",
     "fingerprinting": {
       "Blazored.LocalStorage.12n6dz54qr.wasm": "Blazored.LocalStorage.wasm",
       "Microsoft.AspNetCore.Authorization.qe23mgxr71.wasm": "Microsoft.AspNetCore.Authorization.wasm",
@@ -203,8 +203,8 @@
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "KhoaHocOnline.WebInstructor.uryqugn9ip.wasm": "KhoaHocOnline.WebInstructor.wasm",
-      "KhoaHocOnline.WebInstructor.qrv0cifhfm.pdb": "KhoaHocOnline.WebInstructor.pdb"
+      "KhoaHocOnline.WebInstructor.l5y58gc7fh.wasm": "KhoaHocOnline.WebInstructor.wasm",
+      "KhoaHocOnline.WebInstructor.svm0ih1ayx.pdb": "KhoaHocOnline.WebInstructor.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.9ih887ebfz.js": "sha256-oS7IRiQoVt9ThQ7Y2UM3XoeY0JqPD02cg9IvRdufn2w="
@@ -416,10 +416,10 @@
       "WindowsBase.vy2l5u79y6.wasm": "sha256-ufB9Mo5joMyUs3DzXWWBFFIZNEVrt6h9N5stYB6Oln4=",
       "mscorlib.xd6mv31d55.wasm": "sha256-1YSLR2eZt3ceALFV//vZUF2AloxVil3VlrW1zZYPSEI=",
       "netstandard.kaml52uspo.wasm": "sha256-HLEwBpLfzKw2/zGSVzHzFJxznCkt/WIjahrziiMrOpA=",
-      "KhoaHocOnline.WebInstructor.uryqugn9ip.wasm": "sha256-igBPATZ+xRURstz1NKK5Lxv7NMavZETs5+C2Lwsirbo="
+      "KhoaHocOnline.WebInstructor.l5y58gc7fh.wasm": "sha256-1/tYchstPaaNCQM0xpUpow3dM5XgPSdTiUw34qvwpe8="
     },
     "pdb": {
-      "KhoaHocOnline.WebInstructor.qrv0cifhfm.pdb": "sha256-KhtRLFeakjqz44xCsN93wWsweXMxe6Jn12r1ycvIRc4="
+      "KhoaHocOnline.WebInstructor.svm0ih1ayx.pdb": "sha256-KMZ5q+fO3KyNQwmo9cyfcNbDfNncvPHx1HYTwP1J2tM="
     }
   },
   "cacheBootResources": true,

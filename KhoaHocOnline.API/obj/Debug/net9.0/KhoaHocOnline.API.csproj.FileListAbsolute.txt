@@ -156,3 +156,4 @@ D:\quan_li_khoa_hoc_online\KhoaHocOnline.API\obj\Debug\net9.0\refint\KhoaHocOnli
 D:\quan_li_khoa_hoc_online\KhoaHocOnline.API\obj\Debug\net9.0\KhoaHocOnline.API.pdb
 D:\quan_li_khoa_hoc_online\KhoaHocOnline.API\obj\Debug\net9.0\KhoaHocOnline.API.genruntimeconfig.cache
 D:\quan_li_khoa_hoc_online\KhoaHocOnline.API\obj\Debug\net9.0\ref\KhoaHocOnline.API.dll
+D:\quan_li_khoa_hoc_online\KhoaHocOnline.API\obj\Debug\net9.0\KhoaHocOnline.API.sourcelink.json

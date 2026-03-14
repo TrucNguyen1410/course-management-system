@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KhoaHocOnline.WebInstructor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+84f076b77ab86eb5a4d2179ba91857219d40a7d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("KhoaHocOnline.WebInstructor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KhoaHocOnline.WebInstructor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
